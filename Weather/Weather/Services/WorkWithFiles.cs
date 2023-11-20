@@ -1,10 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NPOI.SS.UserModel;
 using Weather.Models;
-using Weather.Services;
 
 
-namespace WebApp.Services
+namespace Weather.Services
 {
     public class WorkWithFiles : IWorkWithFiles
     {
@@ -13,19 +12,14 @@ namespace WebApp.Services
         {
             _context = context;
         }
-        public async Task SaveWeatherInDB(WeatherContext db, MemoryStream stream)
+        public async Task SaveWeatherInDB(MemoryStream stream)
         {
-            var weatherInfos = new List<WeatherInfo>();
-            IWorkbook hssfwb;
-
-            hssfwb = WorkbookFactory.Create(stream);
-
+            var hssfwb = WorkbookFactory.Create(stream);
 
             foreach (ISheet sheet in hssfwb)
             {
-                await SheetProcessingAsync(sheet, db);
+                await SheetProcessingAsync(sheet);
             }
-            var a = 0;
         }
 
 
@@ -72,7 +66,7 @@ namespace WebApp.Services
         }
 
 
-        private async Task SheetProcessingAsync(ISheet sheet, WeatherContext context)
+        private async Task SheetProcessingAsync(ISheet sheet)
         {
             if(sheet == null)
             {
@@ -113,10 +107,9 @@ namespace WebApp.Services
                     weather.HorizontalVisibility = int.Parse(sheetRow.GetCell(10).ToString());
 
 
-                    var condition = sheetRow.GetCell(11);
-                    if (condition == null) throw new NullReferenceException();
+                    var condition = sheetRow.GetCell(11) ?? throw new NullReferenceException();
 
-                    if(!weatherConditions.Select(w => w.Text).Contains(condition.ToString()) &&
+                    if (!weatherConditions.Select(w => w.Text).Contains(condition.ToString()) &&
                         !addedConditions.Select(w => w.Text).Contains(condition.ToString()))
                     {
                         var newCondition = new WeatherCondition { Text = sheetRow.GetCell(11).ToString() };

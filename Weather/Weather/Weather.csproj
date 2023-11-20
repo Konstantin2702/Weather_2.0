@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
     <SpaRoot>ClientApp\</SpaRoot>
     <SpaProxyServerUrl>https://localhost:44455</SpaProxyServerUrl>
@@ -32,10 +32,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="ClientApp\src\app\models\FileWithInfo.ts" />
     <None Remove="ClientApp\src\app\Weather.ts" />
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="ClientApp\src\app\models\FileWithInfo.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\Weather.ts" />
   </ItemGroup>
 

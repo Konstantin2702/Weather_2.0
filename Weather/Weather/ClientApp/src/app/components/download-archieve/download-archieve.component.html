@@ -4,14 +4,16 @@
        #fileInput
        type="file"
        (change)="onFileSelected($event)" >
-<button class="btn btn-sm btn-primary" type="button" (click)="fileInput.click()">Pick File</button>
-<button class="btn btn-sm btn-primary" type="button" (click)="onUpload()">Upload</button>
+<button [disabled]="isSelectFileEnable" class="btn btn-sm btn-primary" type="button" (click)="fileInput.click()" style="margin-right:1%; margin-top:1%">Выбрать файл(ы)</button>
+<button [disabled]="!isUploadEnable" class="btn btn-sm btn-primary" type="button" style="margin-top:1%" (click)="onUpload()">Загрузить</button>
 
-<h5>Выбранные файлы</h5>
-<ul *ngFor="let f of selectedFile">
-  <li>{{f.name}}</li>
+<h5 style="margin-top:1%">Выбранные файлы</h5>
+<ul *ngFor="let f of selectedFiles" ng-show="isFilesSelected">
+  <li>
+    <div *ngIf="f.isLoading" class="spinner-border" role="status">
+      <span class="visually-hidden"></span>
+    </div>
+    <p>{{f.file.name}}   {{f.info}}</p>
+  </li>
 </ul>
-<div *ngIf="isLoading" class="spinner-border" role="status">
-  <span class="visually-hidden"></span>
-</div>
-<p>{{status}}</p>
+
