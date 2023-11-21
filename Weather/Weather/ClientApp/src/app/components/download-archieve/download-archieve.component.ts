@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { DataService } from '../../services/data.service';
 import { FileWithInfo } from '../../models/FileWithInfo';
-import { catchError } from 'rxjs';
 
 
 @Component({
@@ -17,7 +16,7 @@ export class DownloadArchieveComponent {
   isUploadEnable = false;
   isSelectFileEnable = false;
   isRefreshFiles: boolean = true;
-  constructor(private http: HttpClient) {
+  constructor(private dataService: DataService) {
   }
   ngOnInit() {
   }
@@ -56,14 +55,9 @@ export class DownloadArchieveComponent {
   }
 
   load() {
-    debugger;
     this.isSelectFileEnable = true;
     for (let i = 0; i < this.selectedFiles.length; i++) {
-      let fd = new FormData();
-      this.selectedFiles[i].isLoading = true;
-      this.selectedFiles[i].info = "";
-      fd.append('files', this.selectedFiles[i].file, this.selectedFiles[i].file.name);
-      this.http.post('api/send', fd)
+      this.dataService.saveData(this.selectedFiles[i])
         .subscribe((data: any) => {
           console.log(data)
           this.selectedFiles[i].info = data.Text;
@@ -71,9 +65,14 @@ export class DownloadArchieveComponent {
           this.checkLoading();
         },
           (error) => {
-            debugger;
-            this.selectedFiles[i].info = `Status: ${error.error.status}, message: ${error.error.detail}` ;
-            console.log(error);
+            if (error.status === 504) {
+              this.selectedFiles[i].info = `Status: ${error.status}, message: Превышен лимит ожидание сервера`;
+            }
+            else {
+              debugger;
+              this.selectedFiles[i].info = `Status: ${error.error.status}, message: ${error.error.detail}`;
+            }
+            
             this.selectedFiles[i].isLoading = false;
             this.checkLoading();
           });
@@ -81,7 +80,6 @@ export class DownloadArchieveComponent {
   }
 
   checkLoading() {
-    debugger;
     for (let i = 0; i < this.selectedFiles.length; i++) {
       if (this.selectedFiles[i].isLoading === true) {
         return;
