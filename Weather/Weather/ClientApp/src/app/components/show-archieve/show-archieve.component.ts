@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { DataService } from '../../services/data.service';
-import { Weather } from '../../Weather';
+import { Weather } from '../../models/Weather';
 @Component({
   selector: 'app-show-archieve',
   templateUrl: './show-archieve.component.html',
@@ -9,14 +9,16 @@ import { Weather } from '../../Weather';
 export class ShowArchieveComponent implements OnInit {
 
   infWeather: Weather[];
-  tableMode: boolean = true;
+  isLoading = false;
+  tableMode = true;
   countOfElements: number;
   countOfPages: number;
-  countOfElementsOnPAge: number = 5;
-  pageNumber: number = 1;
+  countOfElementsOnPAge = 5;
+  pageNumber = 1;
+  errorMessage: string = "";
 
-  isUpPage: boolean = true;
-  isDownPage: boolean = true;
+  isUpPage = false;
+  isDownPage = false;
 
   months = [
     { id: 1, name: 'Январь' },
@@ -32,82 +34,99 @@ export class ShowArchieveComponent implements OnInit {
     { id: 11, name: 'Ноябрь' },
     { id: 12, name: 'Декбрь' }
   ];
-  years = [
-    2010, 2011, 2012, 2013
-  ];
-  public selectedMonth: number = 0;
-  public selectedYear: number  = 0;
-  constructor(private dataService: DataService) { }
+  years: number[] = [];
+  public selectedMonth = 0;
+  public selectedYear = 0;
+  constructor(private dataService: DataService) {
+    var currentYear = new Date().getFullYear();
+    for (let i = 1970; i <= currentYear; i++) {
+      this.years.push(i);
+    }
+  }
 
   ngOnInit() {
   }
 
   loadWeather() {
-    this.calcPages();
-    this.dataService.getWeather(this.selectedMonth, this.selectedYear, this.pageNumber, this.countOfElementsOnPAge)
-      .subscribe((data: any) => {
-        this.infWeather = data;
-      }
-      );
-
-    this.isUpPage = false;
+    this.errorMessage = "";
+    this.infWeather = [];
+    this.isLoading = true;
     this.pageNumber = 1;
-
-  }
-  calcPages() {
-    //получение количества записей
     this.dataService.getCountOfElementsToShow(this.selectedMonth, this.selectedYear)
       .subscribe((data: any) => {
         this.countOfElements = data;
-        this.countOfPages = this.countOfElements / this.countOfElementsOnPAge;
-        this.countOfPages = Math.floor(this.countOfPages);
+        this.countOfPages = ~~(this.countOfElements / this.countOfElementsOnPAge) + 1;
         if (this.countOfPages * this.countOfElementsOnPAge < this.countOfElements) {
           this.countOfPages++;
         }
-      }
-      );
+        this.isUpPage = this.pageNumber < this.countOfPages;
+
+        this.dataService.getWeather(this.selectedMonth, this.selectedYear, this.pageNumber, this.countOfElementsOnPAge)
+          .subscribe((data: any) => {
+            this.infWeather = data;
+            this.isLoading = false;
+          },
+            (error) => {
+              debugger;
+              this.errorMessage = `Status: ${error.error.status}, message: ${error.error.detail}`;
+              this.countOfPages = 1;
+              this.pageNumber = 1;
+              this.isLoading = false;
+            });
+      },
+        (error) => {
+          debugger;
+          this.isLoading = false;
+          this.errorMessage = `Status: ${error.error.status}, message: ${error.error.detail}`;
+        });
+  }
+  calcPages() {
+    this.dataService.getCountOfElementsToShow(this.selectedMonth, this.selectedYear)
+      .subscribe((data: any) => {
+        this.countOfElements = data;
+        this.countOfPages = ~~(this.countOfElements / this.countOfElementsOnPAge) + 1;
+        if (this.countOfPages * this.countOfElementsOnPAge < this.countOfElements) {
+          this.countOfPages++;
+        }
+        this.isUpPage = this.pageNumber < this.countOfPages;
+      },
+        (error) => {
+          this.errorMessage = `Status: ${error.error.status}, message: ${error.error.detail}`;
+        });
   }
   changePageUp() {
-    debugger
-    if (this.pageNumber === this.countOfPages - 1) {
-      this.isUpPage = true;
-      this.pageNumber++;
-    }
-    else if (this.pageNumber === this.countOfPages) {
-      this.isDownPage = false;
-      this.isUpPage = true;
-    }
-    else {
-      this.pageNumber++;
-      this.isDownPage = false;
-    }
+    this.infWeather = [];
+    this.isLoading = true;
+    this.pageNumber++;
+    this.isUpPage = this.pageNumber < this.countOfPages;
+    this.isDownPage = this.pageNumber > 1;
+
     this.dataService.getWeather(this.selectedMonth, this.selectedYear, this.pageNumber, this.countOfElementsOnPAge)
       .subscribe((data: any) => {
         this.infWeather = data;
-      }
-      );
+        this.isLoading = false;
+      },
+        (error) => {
+          this.errorMessage = `Status: ${error.error.status}, message: ${error.error.detail}`;
+        });
 
 
   }
 
   changePageDown() {
-    debugger
-    if (this.pageNumber === 2) {
-      this.isDownPage = true;
-      this.pageNumber--;
-    }
-    else if (this.pageNumber === 1) {
-      this.isDownPage = true;
-      this.isUpPage = false;
-    }
-    else {
-      this.pageNumber--;
-      this.isUpPage = false;
-    }
+    this.infWeather = [];
+    this.isLoading = true;
+    this.pageNumber--;
+    this.isUpPage = this.pageNumber < this.countOfPages;
+    this.isDownPage = this.pageNumber > 1;
+
     this.dataService.getWeather(this.selectedMonth, this.selectedYear, this.pageNumber, this.countOfElementsOnPAge)
       .subscribe((data: any) => {
         this.infWeather = data;
-      }
-      );
+        this.isLoading = false;
+      },
+        (error) => {
+          this.errorMessage = `Status: ${error.error.status}, message: ${error.error.detail}`;
+        });
   }
 }

@@ -10,9 +10,13 @@
 </select>
 
 <button class="btn btn-sm btn-primary" (click)="loadWeather()">ПоказатьПогоду</button>
-<button class="btn btn-sm btn-primary" (click)="changePageDown()" [disabled]="isDownPage" style=" position: absolute;right:7% ">Назад</button>
-<button class="btn btn-sm btn-primary" (click)="changePageUp()" [disabled]="isUpPage" style=" position: absolute; right:0% ">Вперед</button>
-<table class="table table-striped" id="weather_table">
+<div style="margin-left:5%" *ngIf="isLoading" class="spinner-border" role="status">
+  <span class="visually-hidden"></span>
+</div>
+<div>
+  <p *ngIf="errorMessage !== ''">Ошибка: {{errorMessage}}</p>
+</div>
+<table *ngIf="!isLoading" class="table table-striped" id="weather_table">
   <thead>
     <tr>
       <td>Дата</td>
@@ -31,19 +35,24 @@
   </thead>
   <tbody>
     <tr *ngFor="let w of infWeather">
-      <td>{{w?.DateOfTaking}}</td>
-      <td>{{w?.TimeOfTaking}}</td>
-      <td>{{w?.Temparature}}</td>
-      <td>{{w?.Humidity}}</td>
-      <td>{{w?.DewPoint}}</td>
-      <td>{{w?.Pressure}}</td>
-      <td>{{w?.WindDirection}}</td>
-      <td>{{w?.WindSpeed}}</td>
-      <td>{{w?.Cloudiness}}</td>
-      <td>{{w?.CloudBase}}</td>
-      <td>{{w?.HorizontalVisibility}}</td>
-      <td>{{w?.WeatherCondition}}</td>
+      <td>{{w?.dateOfTaking}}</td>
+      <td>{{w?.timeOfTaking}}</td>
+      <td>{{w?.temparature}}</td>
+      <td>{{w?.humidity}}</td>
+      <td>{{w?.dewPoint}}</td>
+      <td>{{w?.pressure}}</td>
+      <td>{{w?.windDirection}}</td>
+      <td>{{w?.windSpeed}}</td>
+      <td>{{w?.cloudiness}}</td>
+      <td>{{w?.cloudBase}}</td>
+      <td>{{w?.horizontalVisibility}}</td>
+      <td>{{w?.weatherCondition}}</td>
     </tr>
   </tbody>
 </table>
-<p style="position: absolute;right:5% ">{{pageNumber}} из {{countOfPages}}</p>
+<div style="position:absolute; display:flex; right:5%; width:25%">
+  <button class="btn btn-sm btn-primary" (click)="changePageDown()" [disabled]="!isDownPage" style="width:20%;height:10%">Назад</button>
+  <button class="btn btn-sm btn-primary" (click)="changePageUp()" [disabled]="!isUpPage" style="width:20%;height:10%">Вперед</button>
+  <p style="width:25%; margin-left:3%; align-content:center">{{pageNumber}} из {{countOfPages}}</p>
+</div>
+
