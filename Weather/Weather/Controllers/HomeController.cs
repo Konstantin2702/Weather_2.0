@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using Weather.Models;
+using Weather.Exceptions;
 using Weather.Services;
 
 namespace Weather.Controllers
@@ -27,26 +27,52 @@ namespace Weather.Controllers
                 await _workWithFiles.SaveWeatherInDB(stream);
             }
             catch (Exception ex)
-            {         
-                return Problem(JsonSerializer.Serialize(ex.Message));
+            {
+                if(ex is NoOperationsException)
+                {
+                    return Ok(JsonSerializer.Serialize(new { Text = ex.Message }));
+                }
+                return Problem(ex.Message);
             }
             return Ok(JsonSerializer.Serialize(new { Text = "Загружено" }));
         }
 
-        [Route("api/weather/GetWeather")]
+        [Route("getWeather")]
         [HttpGet]
-        public IEnumerable<WeatherInfo> GetWeather(int month, int year, int pageNumber, int countOFElementsOnPage)
+        public async Task<IActionResult> GetWeather(int month,
+                                                    int year,
+                                                    int pageNumber,
+                                                    int countOFElementsOnPage)
         {
-            int firstElementToShow = (pageNumber - 1) * countOFElementsOnPage;
-            int lastElementToShow = firstElementToShow + countOFElementsOnPage - 1;
-            return _workWithFiles.GetFilteredWeather(month, year, _db, firstElementToShow, lastElementToShow);
+            try
+            {
+                var entries = await _workWithFiles.GetFilteredWeather(month,
+                                                                  year,
+                                                                 (pageNumber - 1) * countOFElementsOnPage,
+                                                                 countOFElementsOnPage);
+                return Ok(entries);
+            }
+            catch(Exception ex)
+            {
+                return Problem(JsonSerializer.Serialize(ex.Message));
+            }
+
         }
 
-        [Route("api/weather/GetCountWeather")]
+        [Route("count")]
         [HttpGet]
-        public int GetCountWeather(int month, int year)
+        public async Task<IActionResult> GetCountWeather(int month, int year)
         {
-            return _workWithFiles.GetCountOfElements(month, year, _db);
+            try
+            {
+                var count = await _workWithFiles.GetCountOfElements(month, year);
+                return Ok(count);
+            }
+            catch (Exception ex)
+            {
+                return Problem(JsonSerializer.Serialize(ex.Message));
+            }
+            
         }
     }
 }

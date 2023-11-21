@@ -5,7 +5,7 @@ namespace Weather.Services
     public interface IWorkWithFiles
     {
         public Task SaveWeatherInDB(MemoryStream stream);
-        public IEnumerable<WeatherInfo> GetFilteredWeather(int month, int year, WeatherContext db, int first, int last);
-        public int GetCountOfElements(int month, int year, WeatherContext db);
+        public Task<List<WeatherInfo>> GetFilteredWeather(int month, int year, int offset, int count);
+        public Task<int> GetCountOfElements(int month, int year);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NPOI.SS.UserModel;
+using Weather.Exceptions;
 using Weather.Models;
 
 
@@ -14,7 +15,20 @@ namespace Weather.Services
         }
         public async Task SaveWeatherInDB(MemoryStream stream)
         {
-            var hssfwb = WorkbookFactory.Create(stream);
+            IWorkbook hssfwb;
+            try
+            {
+                hssfwb = WorkbookFactory.Create(stream);
+            }
+            catch
+            {
+                throw new ArgumentException("Файл не является excel");
+            }
+
+            if (hssfwb.GetSheetAt(0) == null)
+            {
+                throw new NullReferenceException("Файл пустой");
+            }
 
             foreach (ISheet sheet in hssfwb)
             {
@@ -22,47 +36,40 @@ namespace Weather.Services
             }
         }
 
-
-        public IEnumerable<WeatherInfo> GetFilteredWeather(int month, int year, WeatherContext db, int first, int last)
+        public Task<List<WeatherInfo>> GetFilteredWeather(int month, int year, int offset, int count)
         {
-            List<WeatherInfo> weatherToSend = new List<WeatherInfo>();
-            if (month != 0 && year != 0)
-            {
-                List<WeatherInfo> weather = db.WeatherInfos
-                   .Where(w => w.DateOfTaking.Year == year && w.DateOfTaking.Month == month)
-                   .OrderBy(w => w.DateOfTaking.Day)
-                   .ThenBy(w => w.TimeOfTaking)
-                   .ToList();
-                for (int i = 0; i < weather.Count(); i++)
-                {
-                    if (i >= first && i <= last)
-                    {
-                        weatherToSend.Add(weather[i]);
-                    }
-                    else if (i > last)
-                        break;
+            var weatherRequest = _context.WeatherInfos.AsQueryable();
 
-                }
-                return weatherToSend;
-            }
-            else
+            if (month != 0)
             {
-                return null;
+                weatherRequest = weatherRequest.Where(w => w.DateOfTaking.Month == month);
             }
+            if (year != 0)
+            {
+                weatherRequest = weatherRequest.Where(w => w.DateOfTaking.Year == year);
+            }
+
+            return weatherRequest.OrderBy(w => w.DateOfTaking.Day)
+                          .ThenBy(w => w.TimeOfTaking)
+                          .Skip(offset)
+                          .Take(count)
+                          .ToListAsync();
         }
 
-        public int GetCountOfElements(int month, int year, WeatherContext db)
+        public Task<int> GetCountOfElements(int month, int year)
         {
-            if (month != 0 && year != 0)
-            {
-                List<WeatherInfo> weather = db.WeatherInfos
-                   .Where(w => w.DateOfTaking.Year == year && w.DateOfTaking.Month == month)
-                   .ToList();
+            var weatherRequest = _context.WeatherInfos.AsQueryable();
 
-                return weather.Count();
+            if(month != 0)
+            {
+                weatherRequest = weatherRequest.Where(w => w.DateOfTaking.Month == month);
             }
-            else
-                return 0;
+            if(year != 0)
+            {
+                weatherRequest = weatherRequest.Where(w => w.DateOfTaking.Year == year);
+            }
+            
+            return weatherRequest.CountAsync();
         }
 
 
@@ -71,6 +78,19 @@ namespace Weather.Services
             if(sheet == null)
             {
                 throw new NullReferenceException();
+            }
+            try
+            {
+                const string testText = "VV";
+                var testCell = sheet.GetRow(2).GetCell(10);
+                if (testText != testCell.ToString())
+                {
+                    throw new Exception();
+                }
+            }
+            catch 
+            {
+                throw new ArgumentException("Данный файл не содержит в себе необходимую информацию");
             }
 
             var weatherConditions = await _context.WeatherConditions.ToListAsync();
@@ -130,6 +150,12 @@ namespace Weather.Services
                     continue;
                 }
             }
+
+            if (!_context.ChangeTracker.HasChanges())
+            {
+                throw new NoOperationsException();
+            }
+
             await _context.SaveChangesAsync();
         }
     }
