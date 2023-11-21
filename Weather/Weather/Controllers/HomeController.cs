@@ -47,9 +47,9 @@ namespace Weather.Controllers
             try
             {
                 var entries = await _workWithFiles.GetFilteredWeather(month,
-                                                                  year,
-                                                                 (pageNumber - 1) * countOFElementsOnPage,
-                                                                 countOFElementsOnPage);
+                                                                      year,
+                                                                     (pageNumber - 1) * countOFElementsOnPage,
+                                                                      countOFElementsOnPage);
                 return Ok(entries);
             }
             catch(Exception ex)
