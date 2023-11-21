@@ -8,7 +8,7 @@ const PROXY_CONFIG = [
     context: [
       "/api",
    ],
-    proxyTimeout: 100000,
+    proxyTimeout: 300000,
     target: target,
     secure: false,
     headers: {
