@@ -38,7 +38,7 @@
 
   <ItemGroup>
     <TypeScriptCompile Include="ClientApp\src\app\models\FileWithInfo.ts" />
-    <TypeScriptCompile Include="ClientApp\src\app\Weather.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\models\Weather.ts" />
   </ItemGroup>
 
   <ItemGroup>
